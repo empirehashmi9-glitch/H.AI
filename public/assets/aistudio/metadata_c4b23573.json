@@ -1,0 +1,6 @@
+{
+  "name": "H.AI - Autonomous Multi-Agent Platform",
+  "description": "H.AI - Multi-agent platform orchestrating 30 specialized agents to generate Web, iOS, Android apps, and auto-deploy to Supabase and Vercel in 1-2 minutes with self-learning and 100,000 agent scaling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#04121a" />
+<title>H.AI Remote · PC control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #04121a;
+    --panel: rgba(6, 28, 38, 0.86);
+    --panel-2: rgba(9, 38, 50, 0.7);
+    --line: rgba(103, 232, 249, 0.22);
+    --aqua: #67e8f9;
+    --aqua-dim: #2fb6cf;
+    --mint: #3dd9b3;
+    --sun: #ffc93c;
+    --coral: #ff7a8a;
+    --ink: #e8fbff;
+    --muted: #7fa8ba;
+    --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+    --sans: "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1100px 520px at 50% -10%, rgba(34, 211, 238, 0.16), transparent 70%),
+      radial-gradient(900px 500px at 100% 100%, rgba(108, 76, 241, 0.12), transparent 70%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(28px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(34, 211, 238, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.035) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: radial-gradient(circle at 50% 20%, #000 30%, transparent 85%);
+  }
+  .wrap { position: relative; max-width: 720px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .brand .mark {
+    width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 800; font-size: 19px; color: var(--aqua);
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.5);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.3), inset 0 0 16px rgba(34, 211, 238, 0.12);
+  }
+  .brand h1 { margin: 0; font-family: var(--mono); font-size: 16px; letter-spacing: 0.16em; }
+  .brand p { margin: 2px 0 0; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .brand .state {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 10px currentColor; }
+  .dot.on { background: var(--mint); box-shadow: 0 0 10px var(--mint); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 40px rgba(2, 10, 17, 0.55);
+    margin-bottom: 12px;
+    backdrop-filter: blur(8px);
+  }
+  .card h2 { margin: 0 0 10px; font-size: 14px; letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--aqua-dim); font-weight: 700; margin: 0 0 6px; }
+  .sub { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; line-height: 1.55; font-weight: 600; }
+
+  label { display: block; margin-bottom: 10px; }
+  label span { display: block; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+  input {
+    width: 100%; padding: 13px 12px; border-radius: 11px; color: var(--ink);
+    background: rgba(2, 12, 18, 0.85); border: 1px solid rgba(103, 232, 249, 0.28);
+    font-family: var(--mono); font-size: 16px; letter-spacing: 0.18em;
+    box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.45);
+  }
+  input:focus { outline: none; border-color: rgba(103, 232, 249, 0.8); box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.16); }
+  input::placeholder { color: rgba(127, 168, 186, 0.6); letter-spacing: 0.1em; }
+
+  button {
+    font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 0.04em;
+    border-radius: 11px; padding: 12px 16px; cursor: pointer; border: 1px solid transparent;
+    transition: transform 0.08s ease, filter 0.15s ease;
+  }
+  button:active { transform: translateY(1px); }
+  .primary { width: 100%; background: var(--aqua); color: #04121a; box-shadow: 0 0 22px rgba(34, 211, 238, 0.3); }
+  .ghost { background: transparent; color: var(--aqua); border-color: rgba(103, 232, 249, 0.35); }
+  .danger { background: rgba(255, 122, 138, 0.14); color: var(--coral); border-color: rgba(255, 122, 138, 0.45); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > button { flex: 1; min-width: 130px; }
+
+  .hint { margin: 10px 0 0; font-size: 11px; color: var(--muted); line-height: 1.55; font-weight: 600; }
+  .err { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(255, 122, 138, 0.1); border: 1px solid rgba(255, 122, 138, 0.4); color: var(--coral); font-size: 12px; font-weight: 600; line-height: 1.5; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.035); border-radius: 12px; padding: 10px; }
+  .stat b { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 3px; }
+  .stat span { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+
+  .line { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 11px; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.035); margin-bottom: 7px; }
+  .line b { flex: 0 0 68px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .line code { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+  .copy { border: 1px solid rgba(103, 232, 249, 0.3); background: rgba(34, 211, 238, 0.1); color: var(--aqua); font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 8px; border-radius: 8px; flex: 0 0 auto; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 9px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.05); }
+  .badge.ok { color: var(--mint); border-color: rgba(61, 217, 179, 0.45); background: rgba(61, 217, 179, 0.1); }
+  .badge.warn { color: var(--sun); border-color: rgba(255, 201, 60, 0.45); background: rgba(255, 201, 60, 0.1); }
+  .badge.bad { color: var(--coral); border-color: rgba(255, 122, 138, 0.45); background: rgba(255, 122, 138, 0.1); }
+
+  .callout { border-radius: 12px; padding: 11px 12px; font-size: 12px; line-height: 1.55; font-weight: 600; margin: 10px 0; }
+  .callout.good { border: 1px solid rgba(61, 217, 179, 0.4); background: rgba(61, 217, 179, 0.09); color: #bff7e8; }
+  .callout.warn { border: 1px solid rgba(255, 201, 60, 0.45); background: rgba(255, 201, 60, 0.09); color: #ffe9b0; }
+
+  .steps { counter-reset: s; display: grid; gap: 12px; }
+  .step { display: flex; gap: 10px; }
+  .step::before {
+    counter-increment: s; content: counter(s);
+    flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--aqua); color: #04121a; font-family: var(--mono); font-size: 11px; font-weight: 800;
+    box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
+  }
+  .step h3 { margin: 0 0 3px; font-size: 13px; }
+  .step p { margin: 0; font-size: 11.5px; color: var(--muted); font-weight: 600; line-height: 1.55; }
+  .cmd { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding: 9px 10px; border-radius: 9px; background: rgba(2, 12, 18, 0.9); border: 1px solid rgba(103, 232, 249, 0.2); }
+  .cmd code { flex: 1; font-family: var(--mono); font-size: 9.5px; color: var(--aqua); overflow-wrap: anywhere; line-height: 1.5; }
+
+  a.applink {
+    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 140px;
+    padding: 11px 12px; border-radius: 11px; text-decoration: none; color: var(--ink);
+    border: 1px solid rgba(103, 232, 249, 0.3); background: rgba(34, 211, 238, 0.07);
+    font-size: 12px; font-weight: 700;
+  }
+  a.applink small { display: block; font-size: 9px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+  ul.sec { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  ul.sec li { display: flex; gap: 8px; font-size: 11.5px; color: var(--muted); font-weight: 600; line-height: 1.5; }
+  ul.sec li::before { content: "✓"; color: var(--mint); font-weight: 800; }
+
+  .tools { display: grid; gap: 6px; }
+  .tool { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.03); font-size: 12px; font-weight: 700; }
+  .tool .tag { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; }
+  .tool .tag.yes { color: var(--mint); background: rgba(61, 217, 179, 0.1); border: 1px solid rgba(61, 217, 179, 0.4); }
+  .tool .tag.no { color: var(--muted); border: 1px solid rgba(255, 255, 255, 0.12); }
+
+  footer { text-align: center; color: var(--muted); font-size: 10px; letter-spacing: 0.1em; padding: 14px 0 4px; font-weight: 600; }
+  .hidden { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (max-width: 380px) {
+    body { padding-left: 10px; padding-right: 10px; }
+    .grid2 { grid-template-columns: 1fr; }
+    .card { padding: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <span class="mark">H</span>
+    <div>
+      <h1>H.AI REMOTE</h1>
+      <p>Phone → PC control deck</p>
+    </div>
+    <span class="state"><span class="dot" id="stateDot"></span><span id="stateText">Offline</span></span>
+  </header>
+
+  <section class="card" id="gate">
+    <p class="eyebrow">Pairing</p>
+    <h2>Connect to your PC</h2>
+    <p class="sub">PC par <code>npm run remote</code> chalain. Terminal me yehi address aur 6-digit code dikhega. Code sirf aapke phone me save hota hai.</p>
+    <label>
+      <span>Pairing code</span>
+      <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" aria-label="Pairing code" />
+    </label>
+    <button class="primary" id="connectBtn" type="button">Unlock dashboard</button>
+    <p class="hint">Beacon isi Wi-Fi par ho ya Tailscale par — address khud pick ho jata hai.</p>
+    <p class="err hidden" id="gateErr"></p>
+  </section>
+
+  <main id="deck" class="hidden">
+    <section class="card">
+      <div style="display:flex;align-items:flex-start;gap:10px;justify-content:space-between;flex-wrap:wrap">
+        <div style="min-width:0">
+          <p class="eyebrow">Machine</p>
+          <h2 id="host" style="margin-bottom:2px">—</h2>
+          <p class="sub" id="osLine" style="margin:0">—</p>
+        </div>
+        <div class="row" style="flex:0 0 auto">
+          <span class="badge" id="bPort">port —</span>
+          <span class="badge" id="bUptime">uptime —</span>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <div class="stat"><b>Windows account</b><span id="userVal">—</span></div>
+        <div class="stat"><b>Beacon</b><span id="verVal">—</span></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div id="addresses"></div>
+      </div>
+
+      <div class="callout" id="rdpCallout">—</div>
+
+      <div class="row">
+        <button class="danger" id="lockBtn" type="button">Lock my PC</button>
+        <button class="ghost" id="refreshBtn" type="button">Refresh</button>
+      </div>
+      <p class="hint" id="syncLine">Auto-refresh every 10 seconds.</p>
+    </section>
+
+    <section class="card">
+      <h2>Open on your phone</h2>
+      <p class="sub">Microsoft Remote Desktop install karen, phir PC add karen. Ye app Windows ka signed remote hai — antivirus block nahi karta.</p>
+      <div class="row">
+        <a class="applink" href="https://play.google.com/store/apps/details?id=com.microsoft.rdc.androidx" target="_blank" rel="noreferrer">
+          <span>▶</span><span>Android<small>Google Play</small></span>
+        </a>
+        <a class="applink" href="https://apps.apple.com/app/microsoft-remote-desktop/id714664990" target="_blank" rel="noreferrer">
+          <span style="font-family:var(--mono);font-size:12px">iOS</span><span>iPhone / iPad<small>App Store</small></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>One-time RDP setup</h2>
+      <div class="steps">
+        <div class="step">
+          <div>
+            <h3>Remote Desktop on karen</h3>
+            <p>Settings → System → Remote Desktop → On. Windows Pro/Enterprise chahiye. Ya admin PowerShell me:</p>
+            <div class="cmd">
+              <code id="rdpCmd">Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0; Enable-NetFirewallRule -DisplayGroup 'Remote Desktop'</code>
+              <button class="copy" data-copy="rdpCmd" type="button">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div>
+            <h3>Account par password</h3>
+            <p>RDP password ke bagair sign-in nahi karta. Microsoft account ho to email + Microsoft password (PIN nahi).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div>
+            <h3>App me PC add karen</h3>
+            <p>+ → Add PC → address me <code id="rdpHostInline">—</code> → username + password. Poora desktop phone par.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div>
+            <h3>Bahar se? Tailscale lagayen</h3>
+            <p>Dono devices par Tailscale install karen. Public port forward ki zaroorat nahi, aur beacon bhi private rehta hai.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Detected tools</h2>
+      <div class="tools" id="tools"></div>
+      <p class="hint">RDP ke ilawa RustDesk ya Chrome Remote Desktop bhi chal jayega — signed tools only.</p>
+    </section>
+
+    <section class="card">
+      <h2>Security</h2>
+      <ul class="sec">
+        <li>Pairing code har API request verify karta hai; 6 ghalat tries par 5 minute lock.</li>
+        <li>Code sirf is phone me (localStorage) save hota hai, PC par nahi.</li>
+        <li>Screen/input Windows RDP se — koi unsigned capture script nahi.</li>
+        <li>Sirf apni machine ke liye. Doosron ka PC access karna allowed nahi.</li>
+      </ul>
+    </section>
+
+    <footer>H.AI REMOTE · <span id="footVer">v1.1.0</span> · LAN + Tailscale</footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var KEY = 'hai.remote.code';
+    var codeInput = document.getElementById('code');
+    var gate = document.getElementById('gate');
+    var deck = document.getElementById('deck');
+    var gateErr = document.getElementById('gateErr');
+    var stateDot = document.getElementById('stateDot');
+    var stateText = document.getElementById('stateText');
+    var timer = null;
+    var last = null;
+
+    function readCode() {
+      try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
+    }
+    function writeCode(v) {
+      try { localStorage.setItem(KEY, v); } catch (e) {}
+    }
+    function el(id) { return document.getElementById(id); }
+    function setState(on, text) {
+      stateDot.className = 'dot' + (on ? ' on' : '');
+      stateText.textContent = text;
+    }
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function uptime(s) {
+      var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+      return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm';
+    }
+    function copy(text, btn) {
+      function done(ok) {
+        if (!btn) return;
+        var old = btn.textContent;
+        btn.textContent = ok ? 'Copied' : 'Failed';
+        setTimeout(function () { btn.textContent = old; }, 1400);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(); });
+      } else {
+        fallback();
+      }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        ta.remove(); done(ok);
+      }
+    }
+    function api(path, init) {
+      var code = readCode();
+      var opts = init || {};
+      opts.headers = Object.assign({ Authorization: 'Bearer ' + code }, opts.headers || {});
+      opts.cache = 'no-store';
+      return fetch(path, opts).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok) {
+            var err = new Error(body.error || ('HTTP ' + res.status));
+            err.status = res.status;
+            throw err;
+          }
+          return body;
+        });
+      });
+    }
+
+    function line(label, value, copyable) {
+      return '<div class="line"><b>' + esc(label) + '</b><code>' + esc(value) + '</code>' +
+        (copyable === false ? '' : '<button class="copy" data-value="' + esc(value) + '" type="button">Copy</button>') + '</div>';
+    }
+
+    function render(s) {
+      last = s;
+      var rdp = s.rdp || {};
+      var ready = rdp.enabled && rdp.listening;
+      el('host').textContent = s.hostname || '—';
+      el('osLine').textContent = (s.os || s.platform || '') + ' · ' + (s.user || '');
+      el('userVal').textContent = s.user || '—';
+      el('verVal').textContent = 'v' + (s.version || '—');
+      el('bPort').textContent = 'port ' + (rdp.port || 3389) + ' ' + (rdp.listening ? 'open' : 'closed');
+      el('bPort').className = 'badge ' + (rdp.listening ? 'ok' : 'bad');
+      el('bUptime').textContent = 'uptime ' + uptime(s.uptime || 0);
+      el('bUptime').className = 'badge';
+
+      var html = '';
+      (s.addresses || []).forEach(function (ip) {
+        html += line(ip.kind === 'tailscale' ? 'Tailscale' : 'LAN', ip.address);
+      });
+      if (!html) html = '<p class="hint">Koi LAN/Tailscale address nahi mila.</p>';
+      if (rdp.lanAddress) html += line('RDP host', rdp.lanAddress + ':' + (rdp.port || 3389));
+      el('addresses').innerHTML = html;
+
+      var hostValue = rdp.lanAddress ? rdp.lanAddress + ':' + (rdp.port || 3389) : 'LAN IP';
+      el('rdpHostInline').textContent = hostValue;
+
+      var call = el('rdpCallout');
+      if (ready) {
+        call.className = 'callout good';
+        call.innerHTML = '<b>RDP ready.</b> Microsoft Remote Desktop me address <code>' + esc(hostValue) + '</code> daalen, phir Windows password. Poora desktop phone par chalega.';
+      } else {
+        call.className = 'callout warn';
+        call.innerHTML = '<b>RDP abhi ' + (rdp.known && !rdp.enabled ? 'band' : 'listening nahi') + ' hai.</b> Neeche step 1 follow karen. Phone isi Wi-Fi par ho to turant connect ho jayega.';
+      }
+
+      var tools = el('tools');
+      tools.innerHTML = '';
+      (s.tools || []).forEach(function (t) {
+        var row = document.createElement('div');
+        row.className = 'tool';
+        row.innerHTML = '<span>' + esc(t.label) + '</span><span class="tag ' + (t.installed ? 'yes' : 'no') + '">' + (t.installed ? 'installed' : 'missing') + '</span>';
+        tools.appendChild(row);
+      });
+
+      el('footVer').textContent = 'v' + (s.version || '—');
+      setState(true, 'Online');
+      el('syncLine').textContent = 'Synced ' + new Date().toLocaleTimeString() + ' · auto-refresh 10s';
+    }
+
+    function showDeck() {
+      gate.classList.add('hidden');
+      deck.classList.remove('hidden');
+    }
+
+    function showGate(message) {
+      deck.classList.add('hidden');
+      gate.classList.remove('hidden');
+      gateErr.classList.toggle('hidden', !message);
+      gateErr.textContent = message || '';
+      setState(false, 'Offline');
+    }
+
+    function load(quiet) {
+      return api('/api/status').then(function (s) {
+        render(s);
+        showDeck();
+        return s;
+      }).catch(function (err) {
+        if (err.status === 401) {
+          try { localStorage.removeItem(KEY); } catch (e) {}
+          showGate('Code ghalat hai — terminal par dikhaya gaya 6-digit code daalen.');
+        } else if (last) {
+          setState(false, 'Offline');
+          el('syncLine').textContent = 'Beacon se connection nahi. PC par "npm run remote" chal raha hai?';
+        } else {
+          showGate(err.message || 'Beacon se connect nahi ho saka.');
+        }
+        throw err;
+      });
+    }
+
+    function startPolling() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(function () {
+        if (document.hidden) return;
+        load(true).catch(function () {});
+      }, 10000);
+    }
+
+    el('connectBtn').addEventListener('click', function () {
+      var v = (codeInput.value || '').replace(/\D/g, '');
+      if (v.length < 4) {
+        gateErr.classList.remove('hidden');
+        gateErr.textContent = 'Pairing code kam az kam 4 digits ka hona chahiye.';
+        return;
+      }
+      writeCode(v);
+      gateErr.classList.add('hidden');
+      load(false).then(function () {
+        startPolling();
+      }).catch(function () {});
+    });
+
+    codeInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') el('connectBtn').click();
+    });
+
+    el('refreshBtn').addEventListener('click', function () {
+      load(false).catch(function () {});
+    });
+
+    el('lockBtn').addEventListener('click', function () {
+      var btn = el('lockBtn');
+      btn.disabled = true;
+      api('/api/lock', { method: 'POST' }).then(function () {
+        btn.textContent = 'PC locked';
+        setTimeout(function () { btn.textContent = 'Lock my PC'; btn.disabled = false; }, 2600);
+      }).catch(function () {
+        btn.textContent = 'Lock failed';
+        setTimeout(function () { btn.textContent = 'Lock my PC'; btn.disabled = false; }, 2200);
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      var target = e.target.closest('.copy');
+      if (!target) return;
+      var value = target.getAttribute('data-value');
+      if (!value) {
+        var src = document.getElementById(target.getAttribute('data-copy'));
+        value = src ? src.textContent : '';
+      }
+      if (value) copy(value, target);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && readCode()) load(true).catch(function () {});
+    });
+
+    var saved = readCode();
+    if (saved) {
+      codeInput.value = saved;
+      load(true).then(function () { startPolling(); }).catch(function () {});
+    } else {
+      showGate('');
+    }
+  })();
+</script>
+</body>
+</html>

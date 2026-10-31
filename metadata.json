@@ -1,0 +1,8 @@
+{
+  "name": "H.AI - J.A.R.V.I.S. Autonomous AI App Factory",
+  "description": "Autonomous multi-agent platform orchestrating 30 specialized agents to generate Web, iOS, and Android apps with live preview, code export, and side-by-side benchmark comparison against the world's fastest AI engines (Groq, Cerebras, Claude 3.5 Sonnet, Cursor, v0).",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
